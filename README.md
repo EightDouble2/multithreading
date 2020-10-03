@@ -74,6 +74,37 @@
 
 ## 线程状态
 
+### 线程状态
+
+![img](https://github.com/EightDouble2/multithreading/blob/master/src/main/resources/img/002.png)
+
+- 创建
+  - 线程对象一旦创建就进入到新生状态。
+- 就绪
+  - 当调用 `start()` 方法，线程立即进入到就绪状态，但不意味着立即调度执行。
+- 阻塞
+  - 当调用 `sleep()`， `wait()` 或同步锁定时，线程进入阻塞状态，就是代码不往下执行，阻塞事件解除后，重新进入到就绪状态，等待CPU调度执行。
+- 运行
+  - 进入运行状态，线程才真正执行线程体的代码块。
+- 死亡
+  - 线程中断或结束，一旦进入死亡状态，就不能再次启动。
+  
+### 线程方法
+
+| 方法 | 说明 | 
+| --- | --- | 
+| setPriority(int newPriority) | 更改线程的优先级 | 
+| static void sleep(long millis) | 在指定的毫秒内让当前正在执行的线程休眠 | 
+| void join() | 等待该线程终止 | 
+| static void yield() | 暂停当前正在执行的线程对象，并执行其他线程 | 
+| void interrupt() | 中断线程 | 
+| boolean isAlive() | 测试线程是否处于活动状态 |
+
+### 守护线程
+
+- 虚拟机必须确保用户线程执行完毕
+- 虚拟机不用等待守护线程执行完毕 
+
 ## **线程同步**
 
 ## 线程通信问题

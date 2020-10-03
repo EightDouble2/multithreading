@@ -18,6 +18,7 @@ public class Thread03 implements Runnable {
     /**
      * 实现run方法
      */
+    @Override
     public void run() {
         // run方法线程体
         while (ticket > 0) {
