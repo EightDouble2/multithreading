@@ -1,4 +1,4 @@
-package com.johnny.thread;
+package com.johnny.thread.thread06;
 
 /**
  * 静态代理
@@ -15,7 +15,7 @@ public class Thread06 {
 
     public static void main(String[] args) {
         // 通过静态代理类调用真实方法
-        PersonProxy personProxy = new PersonProxy(new Person06());
+        PersonProxy personProxy = new PersonProxy(new Person());
         personProxy.todo();
 
         new PersonProxy(() -> {
@@ -27,7 +27,7 @@ public class Thread06 {
 /**
  * 接口
  */
-interface IPerson06 {
+interface IPerson {
 
     /**
      * 方法
@@ -38,14 +38,14 @@ interface IPerson06 {
 /**
  * 静态代理类
  */
-class PersonProxy implements IPerson06 {
+class PersonProxy implements IPerson {
 
     /**
      * 真实对象
      */
-    private final IPerson06 target;
+    private final IPerson target;
 
-    public PersonProxy(IPerson06 target) {
+    public PersonProxy(IPerson target) {
         this.target = target;
     }
 
@@ -63,7 +63,7 @@ class PersonProxy implements IPerson06 {
 /**
  * 真实类
  */
-class Person06 implements IPerson06 {
+class Person implements IPerson {
 
     /**
      * 真实方法

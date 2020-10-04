@@ -1,4 +1,4 @@
-package com.johnny.thread;
+package com.johnny.thread.thread07;
 
 /**
  * Lambda表达式推导
@@ -10,7 +10,7 @@ public class Thread07 {
     /**
      * 2.静态内部类
      */
-    static class Person0702 implements IPerson07 {
+    static class Person02 implements IPerson {
 
         @Override
         public void todo(int i) {
@@ -19,16 +19,16 @@ public class Thread07 {
     }
 
     public static void main(String[] args) {
-        IPerson07 person = new Person0701();
+        IPerson person = new Person01();
         person.todo(1);
 
-        person = new Person0702();
+        person = new Person02();
         person.todo(2);
 
         /**
          * 3.局部内部类
          */
-        class Person0703 implements IPerson07 {
+        class Person03 implements IPerson {
 
             @Override
             public void todo(int i) {
@@ -36,11 +36,11 @@ public class Thread07 {
             }
         }
 
-        person = new Person0703();
+        person = new Person03();
         person.todo(3);
 
         // 4.匿名内部类
-        person = new IPerson07() {
+        person = new IPerson() {
 
             @Override
             public void todo(int i) {
@@ -60,7 +60,7 @@ public class Thread07 {
 /**
  * 定义函数式接口
  */
-interface IPerson07 {
+interface IPerson {
 
     /**
      * 接口方法
@@ -71,7 +71,7 @@ interface IPerson07 {
 /**
  * 1.实现类
  */
-class Person0701 implements IPerson07 {
+class Person01 implements IPerson {
 
     @Override
     public void todo(int i) {
