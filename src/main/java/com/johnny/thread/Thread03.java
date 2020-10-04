@@ -22,14 +22,14 @@ public class Thread03 implements Runnable {
     public void run() {
         // run方法线程体
         while (ticket > 0) {
-            System.out.println(Thread.currentThread().getName() + "拿到票：" + ticket--);
-
             // 休眠
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            System.out.println(Thread.currentThread().getName() + "拿到票：" + ticket--);
         }
     }
 
