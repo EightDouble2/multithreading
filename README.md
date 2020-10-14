@@ -25,6 +25,12 @@
 - 线程会带来额外的开销，如CPU调度时间，并发控制开销。
 - 每个线程在自己的工作内存交互，内存控制不当会造成数据不一致。 
 
+> Java无法直接开启线程，而是通过C++实现的本地方法操作硬件。
+
+```java
+private native void start0();
+```
+
 ## **线程实现**
 
 ### 继承Thread类
@@ -153,13 +159,13 @@
 - ReentrantLock类实现了Lock，它拥有与synchronized相同的并发性和内存语义，在实现线程安全的控制中，比较常用的是ReentrantLock，可以显式加锁、释放锁。
 
 synchronized与Lock的对比
-- Lock是显式锁（手动开启和关闭锁，别忘记关闭锁）synchronized是隐式锁，出了作用域自动释放。
+- Lock是显式锁(手动开启和关闭锁，别忘记关闭锁)synchronized是隐式锁，出了作用域自动释放。
 - Lock只有代码块锁，synchronized有代码块锁和方法锁。
-- 使用Lock锁，JVM将花费较少的时间来调度线程，性能更好。并且具有更好的扩展性（提供更多的子类）。
+- 使用Lock锁，JVM将花费较少的时间来调度线程，性能更好。并且具有更好的扩展性(提供更多的子类)。
 - 优先使用顺序
   - Lock类
-  - 同步代码块（已经进入了方法体，分配了相应资源）
-  - 同步方法（在方法体之外）
+  - 同步代码块(已经进入了方法体，分配了相应资源)
+  - 同步方法(在方法体之外)
 
 ## 线程通信问题
 
@@ -219,8 +225,180 @@ Java提供了几个方法解决线程之间的通信问题
 
 - JDK5提供了线程池相关API：ExecutorService和Executors。
 - ExecutorService：真正的线程池接口。常见子类TheardPoolExecutor。
-  - `void execute（Runnable command）`：执行任务/命令，没有返回值，一般用来执行Runnable。
+  - `void execute(Runnable command)`：执行任务/命令，没有返回值，一般用来执行Runnable。
   - `<T> Future<T> submit(Callable<T> task)`：执行任务，有返回值，一般用来执行Callable。
   - `void shutdown()`：关闭线程池。
 - Executors：工具类、线程池的工厂类，用于创建并返回不同类型的线程池。
+
+# 并发编程 concurrent
+
+## 什么是JUC
+
+JUC就是`java.util.concurrent`工具包的简称。这是一个处理线程的工具包，JDK 1.5开始出现的。
+- `java.util.concurrent`
+- `java.util.concurrent.atomic`
+- `java.util.concurrent.locks`
+
+普通线程Thread、Runnable没有返回值，效率相比于Callable相对较低。
+
+## 进程与线程
+
+### 概念
+
+进程是一个程序的集合，一个进程往往可以包含多个线程。
+
+Java无法真正开启线程，而是通过C++实现的本地方法操作硬件。
+```java
+private native void start0();
+```
+
+### 并行与并发
+
+**并发**
+- 单核CPU，多线程交替执行。
+
+**并行**
+- 多核CPU，多线程同时执行。
+- 并发编程的本质就是充分利用CPU资源。
+
+```java
+// 获取cpu的核数
+System.out.println(Runtime.getRuntime().availableProcessors());
+```
+
+### 线程状态
+
+```java
+public enum State {
+    // 新生
+    NEW,
+    // 运行
+    RUNNABLE,
+    // 阻塞
+    BLOCKED,
+    // 等待
+    WAITING,
+    // 超时等待
+    TIMED_WAITING,
+    // 终止
+    TERMINATED;
+}
+```
+
+### wait与sleep
+
+- 来自不同的类
+  - wait来自Object类。
+  - sleep来自Thread类。
+- 锁释放
+  - wait会释放锁。
+  - sleep不会释放锁。
+- 使用范围
+  - wait只能在同步代码块中使用。
+  - sleep可以在任何地方使用。
+  
+## Lock锁
+
+### 传统Synchronized
+
+```java
+public synchronized void test() {
+    // 业务代码
+}
+```
+
+### Lock接口
+
+```java
+public void test() {
+    // 创建锁
+    Lock lock = new ReentrantLock();
+    // 加锁
+    lock.lock(); 
+    try {
+        // 业务代码
+    }
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        // 解锁
+        lock.unlock(); 
+    }
+}
+```
+
+### Synchronized和Lock区别
+
+- Synchronized内置的Java关键字，Lock是一个Java类。
+- Synchronized无法判断获取锁的状态，Lock可以判断是否获取到了锁。
+- Synchronized会自动释放锁，lock必须要手动释放锁！如果不释放锁，死锁。
+- Synchronized线程1(获得锁，阻塞)、线程2(一直等待)；Lock锁就不一定会等待下去。
+- Synchronized可重入锁，不可以中断的，非公平；Lock，可重入锁，可以判断锁，非公平(可以自己设置)。
+- Synchronized适合锁少量的代码同步问题，Lock适合锁大量的同步代码。
+
+## 锁的对象
+
+- 两个同步方法
+  - 两个线程谁先拿到锁，就先执行。synchronized锁的对象是方法的调用者。
+- 两个同步方其中一个休眠4秒
+  - 两个线程谁先拿到锁，就先执行。synchronized锁的对象是方法的调用者。
+- 增加一个普通方法
+  - 普通方法不需要判断锁，线程触发了就执行。
+- 两个对象两个同步方法
+  - 两个线程谁先触发就先执行。synchronized锁的对象是方法的调用者，所以锁对两个对象互不影响。
+- 两个静态同步方法
+  - 两个线程谁先拿到锁，就先执行。synchronized锁的对象是整个Class。
+- 两个对象两个静态同步方法
+  - 两个线程谁先拿到锁，就先执行。synchronized锁的对象是整个Class。
+- 一个普通同步方法一个静态同步方法
+  - 两个线程谁先触发就先执行。synchronized锁的对象不同，所以互不影响。
+- 两个对象两个静态同步方法
+  - 两个线程谁先触发就先执行。synchronized锁的对象不同，所以互不影响。
+  
+---
+
+- new、this加锁，锁的是对象实例。
+- static、class加锁，锁的是整个类的Class。
+
+## 集合类不安全
+
+普通集合类在并发写入的时候会发生`java.util.ConcurrentModificationException`并发修改异常。
+
+**List**
+- `List<String> list = new Vector<>();`
+- `List<String> list = Collections.synchronizedList(new ArrayList<>());`
+- `List<String> list = new CopyOnWriteArrayList<>();`
+
+**Set**
+- `Set<String> set = Collections.synchronizedSet(new HashSet<>());`
+- `Set<String> set = new CopyOnWriteArraySet<>();`
+
+**Map**
+- `Map<String, String> map = new ConcurrentHashMap<>();`
+
+CopyOnWrite(COW)写入时复制，计算机程序设计领域的一种优化策略。多个线程调用的时候，读取的时候是固定的，写入的时候会覆盖。为了在写入的时候避免覆盖，造成数据问题，读写分离。
+
+## Callable
+
+Callable接口类似于Runnable，因为他们都是为其实例可能由另一个线程执行的类设计的。然而，Runnable不返回结果，也不能抛出异常。
+
+Callable有返回值，可以抛出异常，调用方法也不同，而且具有缓存功能，会阻塞，结果可能需要等待。
+
+> FutureTask实现了RunnableFuture接口，RunnableFuture继承了Runnable接口。而FutureTask有Runnable和Callable两个构造器。所以Callable可以通过FutureTask适配器被Thread调用。
+
+## JUC常用辅助类
+
+### CountDownLatch(减法计数器)
+
+允许一个或多个线程等待直到其他线程中执行的一组操作完成的同步辅助。
+
+CountDownLatch用给定的计数初始化。`await()`方法阻塞，直到由于`countDown()`方法的调用导致当前计数**达到零**或者**超时**，之后所有等待线程被释放，并且任何后续的await调用立即返回。这是一个一次性的现象--计数器无法重置。
+
+### CyclicBarrier(加法计数器)
+
+允许一组线程全部等待彼此达到共同障碍点的同步辅助。循环阻塞在涉及固定大小的线程方的程序中很有用，这些线程必须偶尔等待彼此。屏障被称为循环，因为它可以在等待的线程被释放之后重新使用。
+
+### Semaphore(信号量，限流)
+
+一个计数信号量。在概念上，信号量维持一组许可证。如果有必要，每个`acquire()`都会阻塞，直到许可证可用，然后才能使用它。每个`release()`添加许可证，潜在地释放阻塞获取方。但是，没有使用实际的许可证对象; Semaphore只保留可用数量的计数，并相应地执行。信号量通常用于限制线程数，而不是访问某些(物理或逻辑)资源。
 
