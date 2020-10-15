@@ -402,3 +402,45 @@ CountDownLatch用给定的计数初始化。`await()`方法阻塞，直到由于
 
 一个计数信号量。在概念上，信号量维持一组许可证。如果有必要，每个`acquire()`都会阻塞，直到许可证可用，然后才能使用它。每个`release()`添加许可证，潜在地释放阻塞获取方。但是，没有使用实际的许可证对象; Semaphore只保留可用数量的计数，并相应地执行。信号量通常用于限制线程数，而不是访问某些(物理或逻辑)资源。
 
+## 读写锁(ReadWriteLock)
+
+A ReadWriteLock维护一对关联的locks，一个用于只读操作，一个用于写入。read lock可以由多个阅读线程同时进行，write lock是独占的。
+
+- 锁
+  - 独占锁(写锁)：一次只能被一个线程占有。
+  - 共享锁(读锁)：多个线程可以同时占有。
+- 互斥
+  - 读读不互斥
+  - 读写互斥
+  - 写写互斥
+  
+## 阻塞队列
+
+### 队列
+
+FIFO(先进先出)的数据结构。
+
+- Queue(队列)
+  - Deque(双端队列)
+  - AbstractQueue(非阻塞队列)
+    - PriorityQueue：由数组支持的有界队列。
+    - ConcurrentLinkedQueue：由链接节点支持的可选有界队列。
+  - BlockingQueue(阻塞队列)
+    - ArrayBlockingQueue：由数组支持的有界队列。
+    - LinkedBlockingQueue：由链接节点支持的可选有界队列。
+    - PriorityBlockingQueue：一个由优先级堆支持的无界优先级队列。
+    - DelayQueue：由优先级堆支持的、基于时间的调度队列。
+    - SynchronousQueue：同步队列，利用BlockingQueue接口的简单聚集(rendezvous)机制。
+    
+### 四组API
+
+| 方式 | 抛出异常 | 有返回值，不抛出异常 | 阻塞，等待 | 阻塞，等待超时 |
+| --- | --- | --- | --- | --- |
+| 添加 | `add()` | `offer()` | `put()` | `offer(,,)` |
+| 移除 | `remove()` | `poll()` | `take()` | `poll(,)` |
+| 检测队首元素 | `element()` | `peek()` | - | - |
+
+### 同步队列(SynchronousQueue)
+
+同步队列没有容量，放入一个元素之后必须等待取出之后，才能继续放入元素。
+
