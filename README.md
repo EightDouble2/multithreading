@@ -99,12 +99,12 @@ private native void start0();
 
 | 方法 | 说明 | 
 | --- | --- | 
-| setPriority(int newPriority) | 更改线程的优先级 | 
-| static void sleep(long millis) | 在指定的毫秒内让当前正在执行的线程休眠 | 
-| void join() | 等待该线程终止 | 
-| static void yield() | 暂停当前正在执行的线程对象，并执行其他线程 | 
-| void interrupt() | 中断线程 | 
-| boolean isAlive() | 测试线程是否处于活动状态 |
+| `setPriority(int newPriority)` | 更改线程的优先级 | 
+| `static void sleep(long millis)` | 在指定的毫秒内让当前正在执行的线程休眠 | 
+| `void join()` | 等待该线程终止 | 
+| `static void yield()` | 暂停当前正在执行的线程对象，并执行其他线程 | 
+| `void interrupt()` | 中断线程 | 
+| `boolean isAlive()` | 测试线程是否处于活动状态 |
 
 ### 守护线程
 
@@ -436,11 +436,112 @@ FIFO(先进先出)的数据结构。
 
 | 方式 | 抛出异常 | 有返回值，不抛出异常 | 阻塞，等待 | 阻塞，等待超时 |
 | --- | --- | --- | --- | --- |
-| 添加 | `add()` | `offer()` | `put()` | `offer(,,)` |
-| 移除 | `remove()` | `poll()` | `take()` | `poll(,)` |
+| 添加 | `add()` | `offer()` | `put()` | `offer(E e, long timeout, TimeUnit unit)` |
+| 移除 | `remove()` | `poll()` | `take()` | `poll(long timeout, TimeUnit unit)` |
 | 检测队首元素 | `element()` | `peek()` | - | - |
 
 ### 同步队列(SynchronousQueue)
 
 同步队列没有容量，放入一个元素之后必须等待取出之后，才能继续放入元素。
+
+## 线程池
+
+### 池化技术
+
+池化技术能够减少资源对象的创建次数，提高程序的性能，特别是在高并发下这种提高更加明显。使用池化技术缓存的资源对象有如下共同特点：1、对象创建时间长；2、对象创建需要大量资源；3、对象创建后可被重复使用。
+
+一个资源池具备如下功能：租用资源对象、归还资源对象、清除过期资源对象。
+
+### 线程池方法
+
+线程池不允许使用Executors创建，而是通过ThreadPoolExecutor的方式，更加明确线程池的运行规则，避免资源耗尽的风险。使用Executors返回线程池对象的弊端：
+- `Executors.newSingleThreadExecutor()`：单个线程的线程池、`Executors.newFixedThreadPool(int nThreads)`：固定线程数的线程池。
+  - 允许的请求队列长度为`Integer.MAX_VALUE`，可能会堆积大量的请求，从而导致OOM。
+- `Executors.newCachedThreadPool()`：可伸缩大小的线程池。
+  - 允许的创建线程数量为`Integer.MAX_VALUE`，可能会创建大量的线程，从而导致OOM。
+
+### 线程池参数
+
+Executors创建线程池的本质是使用ThreadPoolExecutor类。
+
+```java
+    public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue, 
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {
+        // 。。。
+    }
+```
+
+- corePoolSize：核心线程池大小。
+- maximumPoolSize：最大核心线程池大小。
+- keepAliveTime：超时时间。
+- unit：超时单位。
+- workQueue：阻塞队列。
+- threadFactory：线程工厂。
+- handler：拒绝策略。
+
+```java
+    public static ExecutorService newSingleThreadExecutor() {
+        return new FinalizableDelegatedExecutorService
+            (new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>()));
+    }
+
+    public static ExecutorService newFixedThreadPool(int nThreads) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>());
+    }
+
+    public static ExecutorService newCachedThreadPool() {
+        return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                      60L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
+    }
+```
+
+- `Executors.newSingleThreadExecutor()`：单个线程的线程池。
+  - 核心线程池大小：1。
+  - 最大核心线程池大小：1。
+- `Executors.newFixedThreadPool(int nThreads)`：固定线程数的线程池。
+  - 核心线程池大小：nThreads。
+  - 最大核心线程池大小：nThreads。
+- `Executors.newCachedThreadPool()`：可伸缩大小的线程池。
+  - 核心线程池大小：0。
+  - 最大核心线程池大小：`Integer.MAX_VALUE`。
+  
+### 线程池阻塞策略
+
+当提交任务数大于corePoolSize的时候，会优先将任务放到workQueue阻塞队列中。当阻塞队列饱和后，会扩充线程池中线程数，直到达到maximumPoolSize最大线程数配置。此时，再多余的任务，则会触发线程池的拒绝策略了。
+
+总结起来，也就是一句话，当提交的任务数大于(`workQueue.size()` + `maximumPoolSize`)，就会触发线程池的拒绝策略。
+
+- `new ThreadPoolExecutor.AbortPolicy()`：抛出异常。
+- `new ThreadPoolExecutor.CallerRunsPolicy()`：使用调用该线程的线程执行。
+- `new ThreadPoolExecutor.DiscardPolicy()`：丢掉任务，不抛出异常。
+- `new ThreadPoolExecutor.DiscardOldestPolicy()`：和最早的线程竞争，若失败则丢掉任务。
+
+### 手动创建线程池
+
+- IO密集型
+  - 最大核心线程池大小应大于程序中十分消耗IO的线程数。
+- CPU密集型
+  - 最大核心线程池大小应等于CPU核数，保持CPU效率最高。
+  - 获取CPU核数：`Runtime.getRuntime().availableProcessors()`。
+
+```java
+ExecutorService threadPool = new ThreadPoolExecutor(
+    2,
+    Runtime.getRuntime().availableProcessors(),
+    3,
+    TimeUnit.SECONDS,
+    new LinkedBlockingQueue<>(3),
+    Executors.defaultThreadFactory(),
+    new ThreadPoolExecutor.AbortPolicy());
+```
 
